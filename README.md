@@ -3,7 +3,7 @@
 A production-ready autonomous AI system capable of recursive self-improvement, independent learning, and intelligence evolution.
 
 [![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
 [![AI Safety](https://img.shields.io/badge/AI%20Safety-Compliant-green.svg)](docs/SAFETY.md)
 
 ## 🎯 System Overview
@@ -557,9 +557,8 @@ This system includes powerful self-improvement capabilities. Please:
 - Report any concerning behavior
 - Follow AI safety best practices
 
-## 📄 License
 
-MIT License - See [LICENSE](LICENSE) for details.
+
 
 ## 🙏 Acknowledgments
 
@@ -569,14 +568,3 @@ MIT License - See [LICENSE](LICENSE) for details.
 - Google Brain for Neural Architecture Search
 - AI Safety researchers worldwide
 
-## 📞 Support
-
-- **Issues**: [GitHub Issues](https://github.com/yourusername/autonomous-ai-system/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/yourusername/autonomous-ai-system/discussions)
-- **Email**: safety@autonomous-ai.com
-
----
-
-**⚡ Built for the Future of Intelligence**
-
-*"An AI that improves itself today becomes the foundation for tomorrow's breakthroughs."*
