@@ -1,0 +1,414 @@
+version: '3.8'
+
+services:
+  # ============================================================================
+  # CORE AI SYSTEM
+  # ============================================================================
+  
+  autonomous-core:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: autonomous-ai-core
+    restart: unless-stopped
+    ports:
+      - "8000:8000"  # API
+      - "8001:8001"  # WebSocket
+      - "8080:8080"  # Dashboard
+    environment:
+      - PYTHONUNBUFFERED=1
+      - AUTONOMOUS_LEARNING=true
+      - SELF_MODIFICATION_ENABLED=true
+    env_file:
+      - .env
+    volumes:
+      - ./src:/app/src
+      - ./config:/app/config
+      - ./data:/app/data
+      - ./skills:/app/skills
+      - ./logs:/app/logs
+    depends_on:
+      - postgres
+      - redis
+      - chromadb
+      - neo4j
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    networks:
+      - autonomous-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # ============================================================================
+  # META-LEARNING SERVICE
+  # ============================================================================
+  
+  meta-learner:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: autonomous-meta-learner
+    restart: unless-stopped
+    command: python src/services/meta_learning_service.py
+    env_file:
+      - .env
+    volumes:
+      - ./src:/app/src
+      - ./data:/app/data
+      - ./models:/app/models
+    depends_on:
+      - postgres
+      - redis
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    networks:
+      - autonomous-network
+
+  # ============================================================================
+  # KNOWLEDGE ACQUISITION SERVICE
+  # ============================================================================
+  
+  knowledge-acquirer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: autonomous-knowledge-acquirer
+    restart: unless-stopped
+    command: python src/services/knowledge_acquisition_service.py
+    env_file:
+      - .env
+    volumes:
+      - ./src:/app/src
+      - ./data:/app/data
+    depends_on:
+      - postgres
+      - redis
+      - chromadb
+    networks:
+      - autonomous-network
+
+  # ============================================================================
+  # SANDBOX EXECUTION SERVICE
+  # ============================================================================
+  
+  sandbox:
+    build:
+      context: .
+      dockerfile: Dockerfile.sandbox
+    container_name: autonomous-sandbox
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    env_file:
+      - .env
+    volumes:
+      - ./data/sandbox:/app/sandbox:ro
+    networks:
+      - autonomous-network
+
+  # ============================================================================
+  # DATABASES
+  # ============================================================================
+  
+  # PostgreSQL - Relational Data
+  postgres:
+    image: postgres:15-alpine
+    container_name: autonomous-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=autonomous_ai
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgrespassword
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - autonomous-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ChromaDB - Vector Database
+  chromadb:
+    image: chromadb/chroma:latest
+    container_name: autonomous-chromadb
+    restart: unless-stopped
+    ports:
+      - "8002:8000"
+    environment:
+      - IS_PERSISTENT=TRUE
+      - ANONYMIZED_TELEMETRY=FALSE
+    volumes:
+      - chroma-data:/chroma/data
+    networks:
+      - autonomous-network
+
+  # Neo4j - Graph Database
+  neo4j:
+    image: neo4j:5-community
+    container_name: autonomous-neo4j
+    restart: unless-stopped
+    ports:
+      - "7474:7474"  # HTTP
+      - "7687:7687"  # Bolt
+    environment:
+      - NEO4J_AUTH=neo4j/neo4jpassword
+      - NEO4J_PLUGINS=["apoc", "graph-data-science"]
+      - NEO4J_dbms_memory_heap_max__size=4G
+    volumes:
+      - neo4j-data:/data
+      - neo4j-logs:/logs
+      - neo4j-import:/var/lib/neo4j/import
+      - neo4j-plugins:/plugins
+    networks:
+      - autonomous-network
+
+  # Redis - Cache & Message Queue
+  redis:
+    image: redis:7-alpine
+    container_name: autonomous-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --maxmemory 2gb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis-data:/data
+    networks:
+      - autonomous-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # InfluxDB - Time Series Data
+  influxdb:
+    image: influxdb:2.7-alpine
+    container_name: autonomous-influxdb
+    restart: unless-stopped
+    ports:
+      - "8086:8086"
+    environment:
+      - DOCKER_INFLUXDB_INIT_MODE=setup
+      - DOCKER_INFLUXDB_INIT_USERNAME=admin
+      - DOCKER_INFLUXDB_INIT_PASSWORD=adminpassword
+      - DOCKER_INFLUXDB_INIT_ORG=autonomous-ai
+      - DOCKER_INFLUXDB_INIT_BUCKET=metrics
+      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=my-super-secret-auth-token
+    volumes:
+      - influxdb-data:/var/lib/influxdb2
+    networks:
+      - autonomous-network
+
+  # ============================================================================
+  # TASK PROCESSING
+  # ============================================================================
+  
+  # Celery Worker
+  celery-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: autonomous-celery-worker
+    restart: unless-stopped
+    command: celery -A src.infrastructure.queue.celery_app worker --loglevel=info --concurrency=4
+    env_file:
+      - .env
+    volumes:
+      - ./src:/app/src
+      - ./data:/app/data
+    depends_on:
+      - redis
+      - postgres
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    networks:
+      - autonomous-network
+
+  # Celery Beat (Scheduler)
+  celery-beat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: autonomous-celery-beat
+    restart: unless-stopped
+    command: celery -A src.infrastructure.queue.celery_app beat --loglevel=info
+    env_file:
+      - .env
+    volumes:
+      - ./src:/app/src
+      - ./data:/app/data
+    depends_on:
+      - redis
+    networks:
+      - autonomous-network
+
+  # Flower (Celery Monitoring)
+  flower:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: autonomous-flower
+    restart: unless-stopped
+    command: celery -A src.infrastructure.queue.celery_app flower --port=5555
+    ports:
+      - "5555:5555"
+    env_file:
+      - .env
+    depends_on:
+      - redis
+      - celery-worker
+    networks:
+      - autonomous-network
+
+  # ============================================================================
+  # MONITORING & OBSERVABILITY
+  # ============================================================================
+  
+  # Prometheus - Metrics Collection
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: autonomous-prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+    networks:
+      - autonomous-network
+
+  # Grafana - Visualization
+  grafana:
+    image: grafana/grafana:latest
+    container_name: autonomous-grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_INSTALL_PLUGINS=redis-datasource,neo4j-datasource
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources
+    depends_on:
+      - prometheus
+    networks:
+      - autonomous-network
+
+  # Jaeger - Distributed Tracing
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: autonomous-jaeger
+    restart: unless-stopped
+    ports:
+      - "5775:5775/udp"
+      - "6831:6831/udp"
+      - "6832:6832/udp"
+      - "5778:5778"
+      - "16686:16686"
+      - "14268:14268"
+      - "14250:14250"
+      - "9411:9411"
+    environment:
+      - COLLECTOR_ZIPKIN_HOST_PORT=:9411
+    networks:
+      - autonomous-network
+
+  # ============================================================================
+  # EXPERIMENT TRACKING
+  # ============================================================================
+  
+  # MLflow
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:latest
+    container_name: autonomous-mlflow
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    command: mlflow server --host 0.0.0.0 --port 5000 --backend-store-uri postgresql://postgres:postgrespassword@postgres:5432/mlflow --default-artifact-root /mlflow/artifacts
+    depends_on:
+      - postgres
+    volumes:
+      - mlflow-data:/mlflow/artifacts
+    networks:
+      - autonomous-network
+
+  # ============================================================================
+  # JUPYTER NOTEBOOK (Development)
+  # ============================================================================
+  
+  jupyter:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: autonomous-jupyter
+    restart: unless-stopped
+    ports:
+      - "8888:8888"
+    command: jupyter lab --ip=0.0.0.0 --port=8888 --no-browser --allow-root --NotebookApp.token=''
+    env_file:
+      - .env
+    volumes:
+      - ./notebooks:/app/notebooks
+      - ./src:/app/src
+      - ./data:/app/data
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    networks:
+      - autonomous-network
+
+volumes:
+  postgres-data:
+  chroma-data:
+  neo4j-data:
+  neo4j-logs:
+  neo4j-import:
+  neo4j-plugins:
+  redis-data:
+  influxdb-data:
+  prometheus-data:
+  grafana-data:
+  mlflow-data:
+
+networks:
+  autonomous-network:
+    driver: bridge

@@ -1,0 +1,241 @@
+# Autonomous Self-Improving AI System - Requirements
+# Python 3.11+
+
+# Core Framework & Async
+asyncio-mqtt==0.16.1
+aiohttp==3.9.3
+aiofiles==23.2.1
+
+# AI & Machine Learning
+openai==1.12.0
+anthropic==0.18.1
+transformers==4.37.0
+torch==2.1.2
+torchvision==0.16.2
+torchaudio==2.1.2
+accelerate==0.26.1
+bitsandbytes==0.41.3
+auto-gptq==0.7.1
+sentence-transformers==2.3.1
+scikit-learn==1.4.0
+xgboost==2.0.3
+lightgbm==4.3.0
+
+# Neural Architecture Search & AutoML
+optuna==3.5.0
+ray[tune]==2.9.2
+hyperopt==0.2.7
+nni==3.0
+
+# Deep Learning Frameworks
+tensorflow==2.15.0
+keras==2.15.0
+jax==0.4.23
+flax==0.8.0
+
+# Reinforcement Learning
+stable-baselines3==2.2.1
+gymnasium==0.29.1
+sb3-contrib==2.2.1
+
+# Vector Databases & Knowledge Graphs
+chromadb==0.4.22
+qdrant-client==1.7.3
+weaviate-client==3.26.2
+pinecone-client==3.0.2
+faiss-cpu==1.7.4
+neo4j==5.16.0
+networkx==3.2.1
+
+# Traditional Databases
+sqlalchemy==2.0.25
+psycopg2-binary==2.9.9
+redis==5.0.1
+pymongo==4.6.1
+
+# Time Series & Metrics
+influxdb-client==1.39.0
+prometheus-client==0.19.0
+grafana-client==3.6.0
+
+# Distributed Computing
+dask[complete]==2024.1.1
+distributed==2024.1.1
+celery==5.3.6
+celery[redis]==5.3.6
+
+# Task Queue & Workflow
+apache-airflow==2.8.1
+prefect==2.14.16
+dramatiq==1.15.0
+
+# API & Web Framework
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+websockets==12.0
+starlette==0.36.3
+pydantic==2.5.3
+pydantic-settings==2.1.0
+
+# Knowledge Acquisition
+arxiv==2.1.0
+requests==2.31.0
+beautifulsoup4==4.12.3
+selenium==4.17.2
+playwright==1.41.1
+scrapy==2.11.0
+feedparser==6.0.11
+gitpython==3.1.41
+pygithub==2.1.1
+
+# Natural Language Processing
+spacy==3.7.2
+nltk==3.8.1
+textblob==0.17.1
+gensim==4.3.2
+
+# Code Analysis & Generation
+ast-decompiler==0.7.0
+black==23.12.1
+pylint==3.0.3
+autopep8==2.0.4
+isort==5.13.2
+radon==6.0.1
+
+# Sandboxing & Security
+docker==7.0.0
+kubernetes==29.0.0
+# pysandbox==1.0.1  # Disabled: package not available on PyPI, sandboxing fallback used instead
+bandit==1.7.6
+safety==3.0.1
+
+# Monitoring & Observability
+opentelemetry-api==1.22.0
+opentelemetry-sdk==1.22.0
+opentelemetry-instrumentation==0.43b0
+structlog==24.1.0
+python-json-logger==2.0.7
+
+# Testing & Quality Assurance
+pytest==7.4.4
+pytest-asyncio==0.23.3
+pytest-cov==4.1.0
+pytest-mock==3.12.0
+pytest-benchmark==4.0.0
+hypothesis==6.96.1
+locust==2.20.1
+
+# Data Processing & Analysis
+numpy==1.26.3
+pandas==2.2.0
+polars==0.20.6
+pyarrow==14.0.2
+h5py==3.10.0
+
+# Visualization & Dashboards
+matplotlib==3.8.2
+seaborn==0.13.1
+plotly==5.18.0
+dash==2.14.2
+streamlit==1.30.0
+
+# Configuration & Environment
+python-dotenv==1.0.0
+pyyaml==6.0.1
+toml==0.10.2
+configparser==6.0.0
+dynaconf==3.2.4
+
+# Utilities
+click==8.1.7
+rich==13.7.0
+tqdm==4.66.1
+tenacity==8.2.3
+schedule==1.2.1
+python-dateutil==2.8.2
+pytz==2024.1
+
+# System Monitoring
+psutil==5.9.8
+py-cpuinfo==9.0.0
+nvidia-ml-py==12.535.133
+gputil==1.4.0
+
+# Cryptography & Security
+cryptography==42.0.1
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+pyjwt==2.8.0
+
+# Logging & Error Tracking
+sentry-sdk==1.40.0
+loguru==0.7.2
+# colorlog pinned version removed to satisfy Apache Airflow's <5.0 constraint
+
+# File Handling
+openpyxl==3.1.2
+python-docx==1.1.0
+pypdf2==3.0.1
+pillow==10.2.0
+
+# Cloud Providers SDKs
+boto3==1.34.34  # AWS
+google-cloud-storage==2.14.0  # GCP
+azure-storage-blob==12.19.0  # Azure
+
+# Networking
+httpx==0.26.0
+aiohttp==3.9.3
+grpcio==1.60.0
+grpcio-tools==1.60.0
+
+# Message Queues
+pika==1.3.2  # RabbitMQ
+kafka-python==2.0.2  # Kafka
+nats-py==2.6.0  # NATS
+
+# Experimentation & A/B Testing
+pymc==5.10.3
+statsmodels==0.14.1
+scipy==1.12.0
+
+# Graph & Network Analysis
+# graph-tool==2.57  # Disabled: not available via PyPI on this platform
+igraph==0.11.3
+community==1.0.0b1
+
+# Genetic Programming & Evolution
+deap==1.4.1
+gplearn==0.4.2
+neat-python==0.92
+
+# Multi-Agent Systems
+mesa==2.2.2
+pettingzoo==1.24.3
+
+# Causal Inference
+dowhy==0.11.1
+causalml==0.15.0
+
+# Optimization
+cvxpy==1.4.2
+pulp==2.7.0
+gekko==1.0.6
+
+# Explainability & Interpretability
+shap==0.44.1
+lime==0.2.0.1
+interpret==0.5.0
+
+# Additional ML Tools
+mlflow==2.10.0
+wandb==0.16.2
+tensorboard==2.15.1
+comet-ml==3.38.1
+
+# Optional: Specialized Tools
+# albumentations==1.3.1  # Image augmentation
+# opencv-python==4.9.0.80  # Computer vision
+# librosa==0.10.1  # Audio processing
+# timm==0.9.12  # PyTorch image models
+# einops==0.7.0  # Tensor operations

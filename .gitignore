@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtual environments
+venv/
+.env
+.env.*
+
+# Data and logs
+data/
+logs/
+backups/
+
+# IDE / editor
+.vscode/
+.idea/
+*.swp
+
+# Byte-compiled / cache
+*.egg-info/
+.dist/
+build/
+
+# Misc
+.DS_Store
